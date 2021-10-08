@@ -1,0 +1,79 @@
+"""Access to Octopus APi see """
+from enum import Enum
+import logging
+import os
+from typing import Any, Dict
+import requests
+
+from . import tool
+from . import resource
+
+
+class API():
+    """Class for interacting with the Bitbucket resources"""
+    logger = logging.getLogger(__name__)
+
+    def __init__(self, bitbucket_workspace: str, username: str, password: str, bitbucket_url: str = 'https://api.bitbucket.org/2.0'):
+        """Grants access to the Bitbucket API.
+
+        Args:
+            bitbucket_workspace (str): The Bitbucket workspace repositories reside under.
+            username (str): The Bitbucket username used to access Bitbucket
+            password (str): The password used to access Bitbucket.
+            bitbucket_url (str, optional): Defaults to 'https://bitbucket.org/'.
+        """
+        self.bitbucket_workspace = bitbucket_workspace
+        self.bitbucket_url = bitbucket_url
+
+        self.session = requests.Session()
+        self.session.auth = (username, password)
+
+    def get_repositories(self, parameters: dict=None) -> tool.Pages:
+        """Lists all of the repositories for a workspace.
+
+        Args:
+            parameters (dict, optional): Parameters used to query for deployments. Defaults to None.
+
+        Returns:
+            tool.Pages: Generator for Deployment objects
+        """
+        url = '/'.join([
+            self.bitbucket_url,
+            'repositories',
+            self.bitbucket_workspace])
+
+        pages = tool.Pages(
+            connection=tool.Connection(
+                session=self.session,
+                url_base=url),
+            url=url,
+            parameters=parameters,
+            resource=resource.Repository)
+
+        return pages
+
+    def get_repository(self, repository_name: str, parameters: dict=None) -> resource.Repository:
+        """Lists all of the repositories for a workspace.
+
+        Args:
+            parameters (dict, optional): Parameters used to query for deployments. Defaults to None.
+
+        Returns:
+            tool.Pages: Generator for Deployment objects
+        """
+        url = '/'.join([
+            self.bitbucket_url,
+            'repositories',
+            self.bitbucket_workspace,
+            repository_name])
+
+        response = self.session.get(url)
+        response.raise_for_status()
+
+        repository = resource.Repository(
+            connection=tool.Connection(
+                session=self.session,
+                url_base=url),
+            **response.json())
+
+        return repository
