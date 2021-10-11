@@ -24,19 +24,22 @@ def branches_from_link(self) -> tool.Pages:
 
     return pages
 
-@property
-def commits_from_link(self) -> tool.Pages:
-    """Method for retrieving commits from repository
+class MixinCommitsFromLink():
+    """Mixin class used to add querying for commits associated with object"""
 
-    Returns:
-        tool.Pages: Iterator that returns commit objects
-    """
-    pages = tool.Pages(
-        connection=self.connection,
-        url=self.links['commits']['href'],
-        resource=Commit)
+    def commits(self, parameters: dict=None) -> tool.Pages:
+        """Method for retrieving commits from the associated object
 
-    return pages
+        Returns:
+            tool.Pages: Iterator that returns commit objects
+        """
+        pages = tool.Pages(
+            connection=self.connection,
+            url=self.links['commits']['href'],
+            parameters=parameters,
+            resource=Commit)
+
+        return pages
 
 @property
 def pullrequests_from_link(self) -> tool.Pages:
@@ -87,6 +90,7 @@ def get_branch(self, branch_name) -> "Branch":
     return branch
 
 class MixinDelete():
+    """Mixin class used to add delete functionality"""
     def delete(self) -> requests.models.Response:
         """Method for deleting the resource represented by this object.
 
@@ -99,11 +103,15 @@ class MixinDelete():
         response.raise_for_status()
         return response
 
+
 class Base(SimpleNamespace):
     def __init__(self, connection: tool.Connection, **kwargs) -> None:
         super().__init__(**kwargs)
 
         self.connection = connection
+
+    def __repr__(self):
+        return '%s %s' % (self.__class__, self.name)
 
     def refresh(self):
         url = self.links['self']['href']
@@ -114,20 +122,20 @@ class Base(SimpleNamespace):
         self.__dict__.update(**response.json())
 
 
-class Branch(MixinDelete, Base):
+class Branch(MixinCommitsFromLink, MixinDelete, Base):
     """Helper class for Branches"""
-
-    commits = commits_from_link
 
 
 class Commit(Base):
     """Helper class for Commits"""
 
+    def __repr__(self):
+        return '%s %s' % (self.__class__, self.hash)
 
-class Pullrequest(Base):
+
+class Pullrequest(MixinCommitsFromLink, Base):
     """Helper class for Pullrequests"""
 
-    commits = commits_from_link
     def merge(self, merge_strategy: "PullrequestMergeStrategy", message: str) -> Union["Pullrequest", "PullrequestWaiter"]:
         url = self.links['merge']['href']
 
@@ -212,7 +220,7 @@ class PullrequestWaiter():
                 break
 
 
-class Repository(Base):
+class Repository(MixinCommitsFromLink, Base):
     """Helper class for Repositories"""
 
     branch = get_branch
@@ -391,10 +399,8 @@ class PullrequestMergeStrategy(Enum):
     FAST_FORWARD = 'fast_forward'
 
 
-class Tag(MixinDelete, Base):
+class Tag(MixinCommitsFromLink, MixinDelete, Base):
     """Helper class for Tags"""
-
-    commits = commits_from_link
 
     @property
     def target_commit_object(self) -> Commit:
