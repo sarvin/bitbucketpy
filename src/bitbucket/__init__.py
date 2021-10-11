@@ -53,13 +53,16 @@ class API():
         return pages
 
     def get_repository(self, repository_name: str, parameters: dict=None) -> resource.Repository:
-        """Lists all of the repositories for a workspace.
+        """Find a single repository in a workspace.
 
         Args:
-            parameters (dict, optional): Parameters used to query for deployments. Defaults to None.
+            repository_name (str): [description]
+            parameters (dict, optional): Parameters used to query for repository.
+                Defaults to None.
 
         Returns:
-            tool.Pages: Generator for Deployment objects
+            resource.Repository: Repository object representing the repository
+                found within the workspace.
         """
         url = '/'.join([
             self.bitbucket_url,

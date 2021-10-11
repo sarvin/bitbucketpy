@@ -9,6 +9,11 @@ from  . import tool
 
 @property
 def branches_from_link(self) -> tool.Pages:
+    """Method for retrieving Branches from repository
+
+    Returns:
+        tool.Pages: Iterator that returns Branch objects
+    """
     pages = tool.Pages(
         connection=self.connection,
         url=self.links['branches']['href'],
@@ -18,6 +23,11 @@ def branches_from_link(self) -> tool.Pages:
 
 @property
 def commits_from_link(self) -> tool.Pages:
+    """Method for retrieving commits from repository
+
+    Returns:
+        tool.Pages: Iterator that returns commit objects
+    """
     pages = tool.Pages(
         connection=self.connection,
         url=self.links['commits']['href'],
@@ -27,6 +37,11 @@ def commits_from_link(self) -> tool.Pages:
 
 @property
 def pullrequests_from_link(self) -> tool.Pages:
+    """Method for retrieving pullrequests from repository
+
+    Returns:
+        tool.Pages: Iterator that returns pullrequest objects
+    """
     pages = tool.Pages(
         connection=self.connection,
         url=self.links['pullrequests']['href'],
@@ -36,6 +51,11 @@ def pullrequests_from_link(self) -> tool.Pages:
 
 @property
 def tags_from_link(self) -> tool.Pages:
+    """Method for retrieving tags from repository
+
+    Returns:
+        tool.Pages: Iterator that returns tag objects
+    """
     pages = tool.Pages(
         connection=self.connection,
         url=self.links['tags']['href'],
@@ -44,6 +64,12 @@ def tags_from_link(self) -> tool.Pages:
     return pages
 
 def get_branch(self, branch_name) -> "Branch":
+    """Method for retrieving a single branch object
+
+    Returns:
+        Branch: a single branch object matching the parameter
+            branch_name found within the repository.
+    """
     url = '/'.join([
         self.links['branches']['href'],
         branch_name])
