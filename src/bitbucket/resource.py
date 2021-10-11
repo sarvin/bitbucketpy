@@ -1,11 +1,14 @@
 """Classes representing Bitbucket resources"""
+import copy
+import time
 from enum import Enum
 from types import SimpleNamespace
 from typing import Union
-import copy
-import time
 
-from  . import tool
+import requests
+
+from . import tool
+
 
 @property
 def branches_from_link(self) -> tool.Pages:
@@ -83,6 +86,18 @@ def get_branch(self, branch_name) -> "Branch":
 
     return branch
 
+class MixinDelete():
+    def delete(self) -> requests.models.Response:
+        """Method for deleting the resource represented by this object.
+
+        Returns:
+            requests.models.Response: response returned by Bitbucket when
+                delete is requested.
+        """
+        url = self.links['self']['href']
+        response = self.connection.session.delete(url)
+        response.raise_for_status()
+        return response
 
 class Base(SimpleNamespace):
     def __init__(self, connection: tool.Connection, **kwargs) -> None:
@@ -99,7 +114,7 @@ class Base(SimpleNamespace):
         self.__dict__.update(**response.json())
 
 
-class Branch(Base):
+class Branch(MixinDelete, Base):
     """Helper class for Branches"""
 
     commits = commits_from_link
@@ -250,14 +265,11 @@ class Repository(Base):
 
         return pullrequest
 
-    def create_tag(self, tag_value: str, commit_hash: Union[str, "Commit"]) -> "Tag":
+    def create_tag(self, tag_name: str, commit_hash: Union[str, "Commit"]) -> "Tag":
         url = self.links['tags']['href']
 
-        data = {'name': tag_value}
-        data = {
-                'name': tag_value,
-                'target': {'hash': commit_hash}
-            }
+        data = {'name': tag_name}
+
         if isinstance(commit_hash, str):
             data['target'] = {'hash': commit_hash}
         elif isinstance(commit_hash, Commit):
@@ -271,6 +283,34 @@ class Repository(Base):
             **response.json())
 
         return tag
+
+    def create_branch(self, branch_name: str, commit_hash: str = "default") -> Branch:
+        """Method for creating a git branch in the associated repository
+
+        Args:
+            branch_name (str): The name of the branch
+            commit_hash (str, optional): short or long commit hash. Defaults to "default".
+
+        Returns:
+            Branch: branch object representing a newly created git branch in the repository.
+        """
+        url = self.links['branches']['href']
+
+        data = {'name': branch_name}
+
+        if isinstance(commit_hash, str):
+            data['target'] = {'hash': commit_hash}
+        elif isinstance(commit_hash, Commit):
+            data['target'] = {'hash': commit_hash.hash}
+
+        response = self.connection.session.post(url, json=data)
+        response.raise_for_status()
+
+        branch = Branch(
+            connection=self.connection,
+            **response.json())
+
+        return branch
 
 
 class PullrequestData():
@@ -351,7 +391,7 @@ class PullrequestMergeStrategy(Enum):
     FAST_FORWARD = 'fast_forward'
 
 
-class Tag(Base):
+class Tag(MixinDelete, Base):
     """Helper class for Tags"""
 
     commits = commits_from_link
