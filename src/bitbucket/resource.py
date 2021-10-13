@@ -24,6 +24,7 @@ def branches_from_link(self) -> tool.Pages:
 
     return pages
 
+
 class MixinCommitsFromLink():
     """Mixin class used to add querying for commits associated with object"""
 
@@ -89,6 +90,7 @@ def get_branch(self, branch_name) -> "Branch":
 
     return branch
 
+
 class MixinDelete():
     """Mixin class used to add delete functionality"""
     def delete(self) -> requests.models.Response:
@@ -102,6 +104,110 @@ class MixinDelete():
         response = self.connection.session.delete(url)
         response.raise_for_status()
         return response
+
+
+class MixinDiffCommit():
+    def diff(self, commit_hash: Union[str, "Branch", "Commit", "Repository", None] = None) -> str:
+        """Produces a raw git-style diff.
+        If commit_hash is not included then the diff is produced against the first parent of the specified commit.
+        If commit_hash is included then this produces a raw, git-style diff for a revspec of a commit, a branch's latest commit or a repository's latest commit.
+
+        Args:
+            commit_hash (Union[str, Branch, Commit, Repository, None): a commit hash as string,
+                a Branch object's latest commit, a Commit object's hash or a Repositoryies last
+                commit.
+
+        Returns:
+            str: the diff output returned by Bitbucket
+        """
+        source_hash = None
+        if isinstance(self, Repository):
+            commit = next(self.commits())
+            source_hash = self.hash
+        elif isinstance(self, Branch):
+            source_hash = self.target['hash']
+        elif isinstance(self, Commit):
+            source_hash = self.hash
+
+        ### Handle different types of input
+        destination_hash = None
+        if isinstance(commit_hash, str):
+            destination_hash = commit_hash
+        if isinstance(commit_hash, Repository):
+            commit = next(commit_hash.commits())
+            destination_hash = commit.hash
+        elif isinstance(commit_hash, Branch):
+            destination_hash = commit_hash.target['hash']
+        elif isinstance(commit_hash, Commit):
+            destination_hash = commit_hash.hash
+
+        spec = source_hash
+        if destination_hash:
+            spec = f"{source_hash}..{destination_hash}"
+
+        url = '/'.join([
+            self.connection.url_base,
+            'diff',
+            spec])
+
+        response = self.connection.session.get(url)
+        response.raise_for_status()
+
+        return response.text
+
+    def diffstat(self, commit_hash: Union[str, "Branch", "Commit", "Repository", None] = None) -> str:
+        """Produces a record for every path modified, including information on the type of the change and the number of lines added and removed.
+        If commit_hash is not included then the diff is produced against the first parent of the specified commit.
+        If commit_hash is included then this produces a raw, git-style diff for a revspec of a commit, a branch's latest commit or a repository's latest commit.
+
+        Args:
+            commit_hash (Union[str, Branch, Commit, Repository, None): a commit hash as string,
+                a Branch object's latest commit, a Commit object's hash or a Repositoryies last
+                commit.
+
+        Returns:
+            str: the diff output returned by Bitbucket
+        """
+        source_hash = None
+        if isinstance(self, Repository):
+            commit = next(self.commits())
+            source_hash = self.hash
+        elif isinstance(self, Branch):
+            source_hash = self.target['hash']
+        elif isinstance(self, Commit):
+            source_hash = self.hash
+
+        ### Handle different types of input
+        destination_hash = None
+        if isinstance(commit_hash, str):
+            destination_hash = commit_hash
+        if isinstance(commit_hash, Repository):
+            commit = next(commit_hash.commits())
+            destination_hash = commit.hash
+        elif isinstance(commit_hash, Branch):
+            destination_hash = commit_hash.target['hash']
+        elif isinstance(commit_hash, Commit):
+            destination_hash = commit_hash.hash
+
+        spec = source_hash
+        if destination_hash:
+            spec = f"{source_hash}..{destination_hash}"
+
+        url = '/'.join([
+            self.connection.url_base,
+            'diffstat',
+            spec])
+
+        pages = tool.Pages(
+            connection=self.connection,
+            url=url,
+            resource=Diffstat)
+
+        return pages
+        # response = self.connection.session.get(url)
+        # response.raise_for_status()
+
+        # return response
 
 
 class Base(SimpleNamespace):
@@ -122,16 +228,22 @@ class Base(SimpleNamespace):
         self.__dict__.update(**response.json())
 
 
-class Branch(MixinCommitsFromLink, MixinDelete, Base):
+class Branch(MixinCommitsFromLink, MixinDelete, MixinDiffCommit, Base):
     """Helper class for Branches"""
 
 
-class Commit(Base):
+class Commit(MixinDiffCommit, Base):
     """Helper class for Commits"""
 
     def __repr__(self):
         return '%s %s' % (self.__class__, self.hash)
 
+
+class Diffstat(Base):
+    """Helper class for diffstat"""
+
+    def __repr__(self):
+        return '%s %s:%s' % (self.__class__.__name__, self.old['path'], self.new['path'])
 
 class Pullrequest(MixinCommitsFromLink, Base):
     """Helper class for Pullrequests"""
@@ -220,7 +332,7 @@ class PullrequestWaiter():
                 break
 
 
-class Repository(MixinCommitsFromLink, Base):
+class Repository(MixinCommitsFromLink, MixinDiffCommit, Base):
     """Helper class for Repositories"""
 
     branch = get_branch
