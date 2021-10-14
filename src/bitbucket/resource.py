@@ -42,6 +42,25 @@ class MixinCommitsFromLink():
 
         return pages
 
+
+class MixinSourceFromLink():
+    """Mixin class used to add querying for source associated with object"""
+
+    def source(self, parameters: dict=None) -> tool.Pages:
+        """Method for retrieving source from the associated object
+
+        Returns:
+            tool.Pages: Iterator that returns commit_file objects
+        """
+        pages = tool.Pages(
+            connection=self.connection,
+            url=self.links['source']['href'],
+            parameters=parameters,
+            resource=CommitFile)
+
+        return pages
+
+
 @property
 def pullrequests_from_link(self) -> tool.Pages:
     """Method for retrieving pullrequests from repository
@@ -217,7 +236,7 @@ class Base(SimpleNamespace):
         self.connection = connection
 
     def __repr__(self):
-        return '%s %s' % (self.__class__, self.name)
+        return '%s %s' % (self.__class__.__name__, self.name)
 
     def refresh(self):
         url = self.links['self']['href']
@@ -244,6 +263,30 @@ class Diffstat(Base):
 
     def __repr__(self):
         return '%s %s:%s' % (self.__class__.__name__, self.old['path'], self.new['path'])
+
+
+class CommitFile(Base):
+    """Helper class for commit_file"""
+
+    def __repr__(self):
+        return '%s %s' % (self.__class__.__name__, self.path)
+
+    def commit_object(self) -> Commit:
+        """Commit object representing the merging of two histories done
+        through a pullrequest.
+
+        Returns:
+            Commit: object representing the merging of two histories
+        """
+        url = self.commit['links']['self']['href']
+        response = self.connection.session.get(url)
+
+        commit = Commit(
+            connection=self.connection,
+            **response.json())
+
+        return commit
+
 
 class Pullrequest(MixinCommitsFromLink, Base):
     """Helper class for Pullrequests"""
@@ -332,7 +375,7 @@ class PullrequestWaiter():
                 break
 
 
-class Repository(MixinCommitsFromLink, MixinDiffCommit, Base):
+class Repository(MixinCommitsFromLink, MixinDiffCommit, MixinSourceFromLink, Base):
     """Helper class for Repositories"""
 
     branch = get_branch
