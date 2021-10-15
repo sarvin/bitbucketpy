@@ -10,19 +10,20 @@ import requests
 from . import tool
 
 
-@property
-def branches_from_link(self) -> tool.Pages:
-    """Method for retrieving Branches from repository
+class MixinBranchesFromLink():
+    def branches(self, parameters: dict=None) -> tool.Pages:
+        """Method for retrieving Branches from repository
 
-    Returns:
-        tool.Pages: Iterator that returns Branch objects
-    """
-    pages = tool.Pages(
-        connection=self.connection,
-        url=self.links['branches']['href'],
-        resource=Branch)
+        Returns:
+            tool.Pages: Iterator that returns Branch objects
+        """
+        pages = tool.Pages(
+            connection=self.connection,
+            url=self.links['branches']['href'],
+            resource=Branch,
+            parameters=parameters)
 
-    return pages
+        return pages
 
 
 class MixinCommitsFromLink():
@@ -81,53 +82,36 @@ class MixinStatusFromLink():
         return pages
 
 
-@property
-def pullrequests_from_link(self) -> tool.Pages:
-    """Method for retrieving pullrequests from repository
+class MixinPullrequestFromLink():
+    def pullrequests(self, parameters: dict=None) -> tool.Pages:
+        """Method for retrieving pullrequests from repository
 
-    Returns:
-        tool.Pages: Iterator that returns pullrequest objects
-    """
-    pages = tool.Pages(
-        connection=self.connection,
-        url=self.links['pullrequests']['href'],
-        resource=Tag)
+        Returns:
+            tool.Pages: Iterator that returns pullrequest objects
+        """
+        pages = tool.Pages(
+            connection=self.connection,
+            url=self.links['pullrequests']['href'],
+            parameters=parameters,
+            resource=Tag)
 
-    return pages
+        return pages
 
-@property
-def tags_from_link(self) -> tool.Pages:
-    """Method for retrieving tags from repository
 
-    Returns:
-        tool.Pages: Iterator that returns tag objects
-    """
-    pages = tool.Pages(
-        connection=self.connection,
-        url=self.links['tags']['href'],
-        resource=Tag)
+class MixinTagsFromLink():
+    def tags_from_link(self, parameters: dict=None) -> tool.Pages:
+        """Method for retrieving tags from repository
 
-    return pages
+        Returns:
+            tool.Pages: Iterator that returns tag objects
+        """
+        pages = tool.Pages(
+            connection=self.connection,
+            url=self.links['tags']['href'],
+            parameters=parameters,
+            resource=Tag)
 
-def get_branch(self, branch_name) -> "Branch":
-    """Method for retrieving a single branch object
-
-    Returns:
-        Branch: a single branch object matching the parameter
-            branch_name found within the repository.
-    """
-    url = '/'.join([
-        self.links['branches']['href'],
-        branch_name])
-
-    response = self.connection.session.get(url)
-    response.raise_for_status()
-
-    branch = Branch(
-        connection=self.connection,
-        **response.json())
-
-    return branch
+        return pages
 
 
 class MixinDelete():
@@ -419,13 +403,9 @@ class PullrequestWaiter():
                 break
 
 
-class Repository(MixinCommitsFromLink, MixinDiffCommit, MixinSourceFromLink, Base):
+class Repository(
+        MixinBranchesFromLink, MixinCommitsFromLink, MixinDiffCommit, MixinPullrequestFromLink, MixinSourceFromLink, MixinTagsFromLink, Base):
     """Helper class for Repositories"""
-
-    branch = get_branch
-    branches = branches_from_link
-    pullrequests = pullrequests_from_link
-    tags = tags_from_link
 
     def pullrequest(self, pullrequest_id: int) -> "Pullrequest":
         """Method for retrieving a existing pullrequest from Bitbucket
@@ -448,6 +428,26 @@ class Repository(MixinCommitsFromLink, MixinDiffCommit, MixinSourceFromLink, Bas
             **response.json())
 
         return pullrequest
+
+    def branch(self, branch_name) -> Branch:
+        """Method for retrieving a single branch object
+
+        Returns:
+            Branch: a single branch object matching the parameter
+                branch_name found within the repository.
+        """
+        url = '/'.join([
+            self.links['branches']['href'],
+            branch_name])
+
+        response = self.connection.session.get(url)
+        response.raise_for_status()
+
+        branch = Branch(
+            connection=self.connection,
+            **response.json())
+
+        return branch
 
     def create_pullrequest(self, pullrequest_data: "PullrequestData") -> "Pullrequest":
         """Method for creating a pullrequest in Bitbucket
