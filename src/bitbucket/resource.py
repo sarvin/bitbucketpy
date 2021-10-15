@@ -61,6 +61,26 @@ class MixinSourceFromLink():
         return pages
 
 
+class MixinStatusFromLink():
+    """Mixin class used to query commit statuses for a commit.
+        Returns all statuses (e.g. build results) for a specific commit.
+    """
+
+    def statuses(self, parameters: dict=None) -> tool.Pages:
+        """Method for retrieving commit statuses for a commit.
+
+        Returns:
+            tool.Pages: Iterator that returns build objects
+        """
+        pages = tool.Pages(
+            connection=self.connection,
+            url=self.links['statuses']['href'],
+            parameters=parameters,
+            resource=Build)
+
+        return pages
+
+
 @property
 def pullrequests_from_link(self) -> tool.Pages:
     """Method for retrieving pullrequests from repository
@@ -251,11 +271,35 @@ class Branch(MixinCommitsFromLink, MixinDelete, MixinDiffCommit, Base):
     """Helper class for Branches"""
 
 
-class Commit(MixinDiffCommit, Base):
+class Build(Base):
+    """Helper class for Builds.
+        Object is returned from a commit's status link.
+    """
+
+    def commit_object(self, parameters: dict=None) -> "Commit":
+        """Method for retrieving commit from the associated object
+
+        Returns:
+            commit: commit object associated with a build
+        """
+        response = self.connection.session.get(
+            self.links['commit']['href'],
+            params=parameters)
+
+        response.raise_for_status()
+
+        commit = Commit(
+            connection=self.connection,
+            **response.json())
+
+        return commit
+
+
+class Commit(MixinDiffCommit, MixinStatusFromLink, Base):
     """Helper class for Commits"""
 
     def __repr__(self):
-        return '%s %s' % (self.__class__, self.hash)
+        return '%s(hash=%s)' % (self.__class__.__name__, self.hash)
 
 
 class Diffstat(Base):
