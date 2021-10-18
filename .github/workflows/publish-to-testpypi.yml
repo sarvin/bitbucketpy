@@ -32,7 +32,7 @@ jobs:
 
     - name: Set the Python Package Version
       run: |
-        echo "PYTHON_PACKAGE_VERSION=${GIT_TAG}-${GITHUB_RUN_NUMBER}" >> $GITHUB_ENV
+        echo "PYTHON_PACKAGE_VERSION=${GIT_TAG}.${GITHUB_RUN_NUMBER}" >> $GITHUB_ENV
 
     - name: Set Package Version
       run: >-
@@ -54,4 +54,5 @@ jobs:
       with:
         password: ${{ secrets.TEST_PYPI_API_TOKEN }}
         repository_url: https://test.pypi.org/legacy/
+        skip_existing: true
 
