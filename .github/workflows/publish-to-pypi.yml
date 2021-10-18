@@ -28,7 +28,7 @@ jobs:
 
     - name: Get the version
       id: get_version
-      run: echo ::set-output GIT_TAG=VERSION::${GITHUB_REF/refs\/tags\//}
+      run: echo "GIT_TAG=${GITHUB_REF/refs\/tags\//}" >> $GITHUB_ENV
 
     - name: Set the Python Package Version
       run: |
