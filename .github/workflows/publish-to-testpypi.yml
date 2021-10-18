@@ -32,7 +32,7 @@ jobs:
 
     - name: Set the Python Package Version
       run: |
-        echo "PYTHON_PACKAGE_VERSION=${GIT_TAG}.${GITHUB_RUN_NUMBER}" >> $GITHUB_ENV
+        echo "PYTHON_PACKAGE_VERSION=${GIT_TAG}b${GITHUB_RUN_NUMBER}" >> $GITHUB_ENV
 
     - name: Set Package Version
       run: >-
