@@ -240,7 +240,7 @@ class Base(SimpleNamespace):
         self.connection = connection
 
     def __repr__(self):
-        return '%s %s' % (self.__class__.__name__, self.name)
+        return '<%s %s>' % (self.__class__.__name__, self.name)
 
     def refresh(self):
         url = self.links['self']['href']
@@ -432,6 +432,9 @@ class Repository(
     def branch(self, branch_name) -> Branch:
         """Method for retrieving a single branch object
 
+        Args:
+            branch_name (str): The name of the branch
+
         Returns:
             Branch: a single branch object matching the parameter
                 branch_name found within the repository.
@@ -518,6 +521,29 @@ class Repository(
             **response.json())
 
         return branch
+
+    def tag(self, tag_name: str) -> "Tag":
+        """Method for retrieving a single tag object
+
+        Args:
+            tag_name (str): The name of the tag
+
+        Returns:
+            Tag: a single branch object matching the parameter
+                tag_name found within the repository.
+        """
+        url = '/'.join([
+            self.links['tags']['href'],
+            tag_name])
+
+        response = self.connection.session.get(url)
+        response.raise_for_status()
+
+        tag = Tag(
+            connection=self.connection,
+            **response.json())
+
+        return tag
 
 
 class PullrequestData():

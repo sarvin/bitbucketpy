@@ -60,6 +60,8 @@ class Pages():
         self.logger.debug("url_next=%s with parameters=%s", self.url_next, self.parameters)
 
         response = self.connection.session.get(self.url_next, params=self.parameters)
+        response.raise_for_status()
+
         self.json = response.json()
 
         ### Let Octopus decide our URL parameters
