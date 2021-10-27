@@ -27,7 +27,19 @@ for branch in branches:
 commit = next(branch.commits)
 ```
 
-### Find a tag in the repository
+#### Find commits ahead of master
+```python
+feature_branch = repository.branch('feature_branch_name')
+
+commits = [
+    commit
+    for commit in feature_branch.commits({'exclude': 'master', 'pagelen': 100})
+]
+
+print(f"feature_branch_name is {len(commits)} commits ahead of master")
+```
+
+#### Find a tag in the repository
 ```python
 tag = repository.tag('1.0.0')
 ```
