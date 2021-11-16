@@ -76,7 +76,7 @@ class API():
         try:
             response.raise_for_status()
         except requests.exceptions.HTTPError as e:
-            raise exceptions.ObjectDoesNotExist(*e.args, **e.__dict__)
+            raise exceptions.ObjectDoesNotExist(*e.args, **e.__dict__) from e
 
         repository = resource.Repository(
             connection=tool.Connection(
