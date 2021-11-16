@@ -7,6 +7,7 @@ from typing import Union
 
 import requests
 
+from . import exceptions
 from . import tool
 
 
@@ -132,6 +133,7 @@ class MixinDelete():
 class MixinDiffCommit():
     def diff(self, commit_hash: Union[str, "Branch", "Commit", "Repository", None] = None) -> str:
         """Produces a raw git-style diff.
+
         If commit_hash is not included then the diff is produced against the first parent of the specified commit.
         If commit_hash is included then this produces a raw, git-style diff for a revspec of a commit, a branch's latest commit or a repository's latest commit.
 
@@ -180,6 +182,7 @@ class MixinDiffCommit():
 
     def diffstat(self, commit_hash: Union[str, "Branch", "Commit", "Repository", None] = None) -> str:
         """Produces a record for every path modified, including information on the type of the change and the number of lines added and removed.
+
         If commit_hash is not included then the diff is produced against the first parent of the specified commit.
         If commit_hash is included then this produces a raw, git-style diff for a revspec of a commit, a branch's latest commit or a repository's latest commit.
 
@@ -280,7 +283,7 @@ class Build(Base):
 
 
 class Commit(MixinDiffCommit, MixinStatusFromLink, Base):
-    """Helper class for Commits"""
+    """Class representing a commit in Bitbucket"""
 
     def __repr__(self):
         return '%s(hash=%s)' % (self.__class__.__name__, self.hash)
@@ -421,7 +424,11 @@ class Repository(
             str(pullrequest_id)])
 
         response = self.connection.session.get(url)
-        response.raise_for_status()
+
+        try:
+            response.raise_for_status()
+        except requests.exceptions.HTTPError as e:
+            raise exceptions.ObjectDoesNotExist(*e.args, **e.__dict__)
 
         pullrequest = Pullrequest(
             connection=self.connection,
@@ -444,7 +451,11 @@ class Repository(
             branch_name])
 
         response = self.connection.session.get(url)
-        response.raise_for_status()
+
+        try:
+            response.raise_for_status()
+        except requests.exceptions.HTTPError as e:
+            raise exceptions.ObjectDoesNotExist(*e.args, **e.__dict__)
 
         branch = Branch(
             connection=self.connection,
@@ -537,7 +548,11 @@ class Repository(
             tag_name])
 
         response = self.connection.session.get(url)
-        response.raise_for_status()
+
+        try:
+            response.raise_for_status()
+        except requests.exceptions.HTTPError as e:
+            raise exceptions.ObjectDoesNotExist(*e.args, **e.__dict__)
 
         tag = Tag(
             connection=self.connection,
@@ -607,13 +622,14 @@ class PullrequestState(Enum):
 
 
 class PullrequestMergeStrategy(Enum):
-    """
-    Collection of options for requesting how source branch commits are added to the
-    destination branch. Commits in a source branch can be added to a destination branch in
+    """Collection of options for requesting how source branch commits are added to the
+    destination branch.
+
+    Commits in a source branch can be added to a destination branch in
     different ways; merged, squashed or fast forwarded.
     The left side of the statement is Bitbucket's name for how commits are added to the destination.
-    The right side of the statement is Branchmanagement's name for
-        how commits are added to the destination.
+    The right side of the statement is Branchmanagement's name for how commits are added to the destination.
+
     Example:
         import branchmanagement.bll.bitbucket
         branchmanagement.bll.bitbucket.method_call(

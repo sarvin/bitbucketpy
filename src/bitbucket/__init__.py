@@ -5,6 +5,7 @@ import os
 from typing import Any, Dict
 import requests
 
+from . import exceptions
 from . import tool
 from . import resource
 
@@ -71,7 +72,11 @@ class API():
             repository_name])
 
         response = self.session.get(url)
-        response.raise_for_status()
+
+        try:
+            response.raise_for_status()
+        except requests.exceptions.HTTPError as e:
+            raise exceptions.ObjectDoesNotExist(*e.args, **e.__dict__)
 
         repository = resource.Repository(
             connection=tool.Connection(
