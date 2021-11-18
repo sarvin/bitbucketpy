@@ -1,6 +1,6 @@
 import requests
 
-class ObjectDoesNotExist(IOError):
+class ObjectDoesNotExist(Exception):
     """Class for indicating a Bitbucket resource requested does not exist"""
     def __init__(self, *args, **kwargs):
         """Initialize RequestException with `request` and `response` objects."""
