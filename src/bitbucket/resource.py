@@ -322,6 +322,9 @@ class CommitFile(Base):
 class Pullrequest(MixinCommitsFromLink, Base):
     """Helper class for Pullrequests"""
 
+    def __repr__(self):
+        return '<%s %s>' % (self.__class__.__name__, self.id)
+
     def merge(self, merge_strategy: "PullrequestMergeStrategy", message: str) -> Union["Pullrequest", "PullrequestWaiter"]:
         url = self.links['merge']['href']
 
@@ -390,7 +393,7 @@ class PullrequestWaiter():
 
         return poll_merge
 
-    def wait(self, delay: int, max_attempts: 40):
+    def wait(self, delay: int = 5, max_attempts: int = 40):
         for x in range(0, max_attempts):
             time.sleep(delay)
 
@@ -627,13 +630,14 @@ class PullrequestMergeStrategy(Enum):
 
     Commits in a source branch can be added to a destination branch in
     different ways; merged, squashed or fast forwarded.
-    The left side of the statement is Bitbucket's name for how commits are added to the destination.
-    The right side of the statement is Branchmanagement's name for how commits are added to the destination.
+    The left side of the statement is Bitbucketpy's name for how commits are added to the destination.
+    The right side of the statement is Bitbucket's name for how commits are added to the destination.
 
     Example:
-        import branchmanagement.bll.bitbucket
-        branchmanagement.bll.bitbucket.method_call(
-            branchmanagement.bll.bitbucket.PullrequestState('open'))
+        import bitbucket
+        repository = bitbucket.get_repository('repository nane')
+        pullrequest = repository.pullrequest(1)
+        pullrequest.merge(bitbucket.resource.PullrequestMergeStrategy.FAST_FORWARD, 'test merge')
     """
     MERGE = 'merge_commit'
     SQUASH = 'squash'
