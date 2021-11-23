@@ -148,7 +148,7 @@ class MixinDiffCommit():
         source_hash = None
         if isinstance(self, Repository):
             commit = next(self.commits())
-            source_hash = self.hash
+            source_hash = commit.hash
         elif isinstance(self, Branch):
             source_hash = self.target['hash']
         elif isinstance(self, Commit):
