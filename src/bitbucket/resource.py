@@ -326,6 +326,12 @@ class Pullrequest(MixinCommitsFromLink, Base):
         return '<%s %s>' % (self.__class__.__name__, self.id)
 
     def merge(self, merge_strategy: "PullrequestMergeStrategy", message: str) -> Union["Pullrequest", "PullrequestWaiter"]:
+        """Merge an open pullrequest
+
+        Returns:
+            Union["Pullrequest", "PullrequestWaiter"]: Either a pullrequest waiter if the merge
+                is occurring asynchronously on Bitbucket's side or a closed pullrequest.
+        """
         url = self.links['merge']['href']
 
         data = {
