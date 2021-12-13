@@ -24,4 +24,4 @@ class ObjectExists(Exception):
                 hasattr(response, 'request')):
             self.request = self.response.request
 
-        super(ObjectAlreadyExists, self).__init__(*args, **kwargs)
+        super(ObjectExists, self).__init__(*args, **kwargs)
