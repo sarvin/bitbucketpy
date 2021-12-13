@@ -506,7 +506,17 @@ class Repository(
             data['target'] = {'hash': commit_hash.hash}
 
         response = self.connection.session.post(url, json=data)
-        response.raise_for_status()
+
+        try:
+            response.raise_for_status()
+        except requests.exceptions.HTTPError as e:
+            if 'application/json' in response.headers['Content-Type']:
+                if 'already exists' in response.json().get('error', {}).get('message'):
+                    raise exceptions.ObjectAlreadyExists(*e.args, **e.__dict__) from e
+                else:
+                    raise
+            else:
+                raise
 
         tag = Tag(
             connection=self.connection,
@@ -514,7 +524,7 @@ class Repository(
 
         return tag
 
-    def create_branch(self, branch_name: str, commit_hash: str = "default") -> Branch:
+    def create_branch(self, branch_name: str, commit_hash: Union[str, "Commit"]) -> Branch:
         """Method for creating a git branch in the associated repository
 
         Args:
@@ -534,7 +544,17 @@ class Repository(
             data['target'] = {'hash': commit_hash.hash}
 
         response = self.connection.session.post(url, json=data)
-        response.raise_for_status()
+
+        try:
+            response.raise_for_status()
+        except requests.exceptions.HTTPError as e:
+            if 'application/json' in response.headers['Content-Type']:
+                if 'already exists' in response.json().get('error', {}).get('message'):
+                    raise exceptions.ObjectAlreadyExists(*e.args, **e.__dict__) from e
+                else:
+                    raise
+            else:
+                raise
 
         branch = Branch(
             connection=self.connection,
