@@ -512,7 +512,7 @@ class Repository(
         except requests.exceptions.HTTPError as e:
             if 'application/json' in response.headers['Content-Type']:
                 if 'already exists' in response.json().get('error', {}).get('message'):
-                    raise exceptions.ObjectAlreadyExists(*e.args, **e.__dict__) from e
+                    raise exceptions.ObjectExists(*e.args, **e.__dict__) from e
                 else:
                     raise
             else:
@@ -550,7 +550,7 @@ class Repository(
         except requests.exceptions.HTTPError as e:
             if 'application/json' in response.headers['Content-Type']:
                 if 'already exists' in response.json().get('error', {}).get('message'):
-                    raise exceptions.ObjectAlreadyExists(*e.args, **e.__dict__) from e
+                    raise exceptions.ObjectExists(*e.args, **e.__dict__) from e
                 else:
                     raise
             else:
