@@ -33,10 +33,10 @@ class API():
         """Lists all of the repositories for a workspace.
 
         Args:
-            parameters (dict, optional): Parameters used to query for deployments. Defaults to None.
+            parameters (dict, optional): Parameters used to query for repositories. Defaults to None.
 
         Returns:
-            tool.Pages: Generator for Deployment objects
+            tool.Pages: Generator for Repository objects
         """
         url = '/'.join([
             self.bitbucket_url,
@@ -85,3 +85,29 @@ class API():
             **response.json())
 
         return repository
+
+    def get_pipelines(self, repository_name: str, parameters: dict=None) -> tool.Pages:
+        """Lists all of the pipelines for a repository.
+
+        Args:
+            parameters (dict, optional): Parameters used to query for pipelines. Defaults to None.
+
+        Returns:
+            tool.Pages: Generator for Pipeline objects
+        """
+        url = '/'.join([
+            self.bitbucket_url,
+            'repositories',
+            self.bitbucket_workspace,
+            repository_name,
+            'pipelines/'])
+
+        pages = tool.Pages(
+            connection=tool.Connection(
+                session=self.session,
+                url_base=url),
+            url=url,
+            parameters=parameters,
+            resource=resource.Pipeline)
+
+        return pages

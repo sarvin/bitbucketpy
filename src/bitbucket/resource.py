@@ -319,6 +319,17 @@ class CommitFile(Base):
         return commit
 
 
+class Pipeline(Base):
+    """Helper class for Pipelines"""
+
+    def __repr__(self):
+        return '<%s %s %s %s>' % (
+            self.__class__.__name__,
+            self.repository['name'],
+            self.build_number,
+            self.target['ref_name'])
+
+
 class Pullrequest(MixinCommitsFromLink, Base):
     """Helper class for Pullrequests"""
 
