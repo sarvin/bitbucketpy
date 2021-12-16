@@ -45,8 +45,12 @@ tag = repository.tag('1.0.0')
 ```
 
 #### Find pipelines for a branch
+
 ```python
 pipelines = list(api.get_pipelines(
     'REPO_SLUG',
-    {'sort': '-created_on', 'q': 'target.ref_name="BRANCH_NAME"'}))
+    {
+        'target.branch':'BRANCH_NAME',
+        'sort': '-created_on',
+        'pagelen':20}))
 ```

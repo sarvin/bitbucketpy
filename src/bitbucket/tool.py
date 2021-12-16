@@ -64,12 +64,14 @@ class Pages():
 
         self.json = response.json()
 
-        ### Let Octopus decide our URL parameters
-        ### after the initial request
-        self.parameters = None
-
         if self.json.get('next'):
+            ### Let Bitbucket decide our URL parameters
+            ### after the initial request
+            self.parameters = None
             self.url_next = self.json.get('next')
+        elif self.json.get('page', 0) * self.index < self.json.get('size', 0):
+            ### pipelines end-point never returns a "next"
+            self.parameters['page'] = self.json.get('page', 1) + 1
         else:
             self.url_next = None
 
