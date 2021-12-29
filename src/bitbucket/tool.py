@@ -69,9 +69,12 @@ class Pages():
             ### after the initial request
             self.parameters = None
             self.url_next = self.json.get('next')
-        elif self.json.get('page', 0) * self.index < self.json.get('size', 0):
+        elif self.json.get('page', 0) * self.json.get('pagelen') < self.json.get('size', 0):
             ### pipelines end-point never returns a "next"
+            # if self.parameters and self.parameters.get('page'):
             self.parameters['page'] = self.json.get('page', 1) + 1
+            # else:
+            # self.url_next = None
         else:
             self.url_next = None
 
