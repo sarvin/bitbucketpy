@@ -14,7 +14,9 @@ class API():
     """Class for interacting with the Bitbucket resources"""
     logger = logging.getLogger(__name__)
 
-    def __init__(self, bitbucket_workspace: str, username: str, password: str, bitbucket_url: str = 'https://api.bitbucket.org/2.0'):
+    def __init__(
+            self, bitbucket_workspace: str, username: str, password: str,
+            bitbucket_url: str = 'https://api.bitbucket.org/2.0'):
         """Grants access to the Bitbucket API.
 
         Args:
@@ -33,7 +35,8 @@ class API():
         """Lists all of the repositories for a workspace.
 
         Args:
-            parameters (dict, optional): Parameters used to query for repositories. Defaults to None.
+            parameters (dict, optional): Parameters used to query
+                for repositories. Defaults to None.
 
         Returns:
             tool.Pages: Generator for Repository objects
@@ -71,12 +74,12 @@ class API():
             self.bitbucket_workspace,
             repository_name])
 
-        response = self.session.get(url)
+        response = self.session.get(url, params=parameters)
 
         try:
             response.raise_for_status()
-        except requests.exceptions.HTTPError as e:
-            raise exceptions.ObjectDoesNotExist(*e.args, **e.__dict__) from e
+        except requests.exceptions.HTTPError as error:
+            raise exceptions.ObjectDoesNotExist(*error.args, **error.__dict__) from error
 
         repository = resource.Repository(
             connection=tool.Connection(
