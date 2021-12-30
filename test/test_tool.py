@@ -37,7 +37,7 @@ class Page(unittest.TestCase):
             'size': 29,
             'values': [
                 {'name': f'{x}{"".join(random.choices(string.ascii_lowercase + string.digits, k=4))}'} # pylint: disable=line-too-long
-                for x in range(1,11)]}
+                for x in range(11,21)]}
 
         response_3 = Mock(status_code=200)
         response_3.json.return_value = {
@@ -47,7 +47,7 @@ class Page(unittest.TestCase):
             'size': 29,
             'values': [
                 {'name': f'{x}{"".join(random.choices(string.ascii_lowercase + string.digits, k=4))}'} # pylint: disable=line-too-long
-                for x in range(1,11)]}
+                for x in range(21,30)]}
 
 
         session.get.side_effect = [
