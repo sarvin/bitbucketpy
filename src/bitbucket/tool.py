@@ -1,13 +1,11 @@
 """Generate an iterator for "paging" through list calls"""
-from collections import namedtuple
 from typing import NamedTuple
 import logging
 import requests
 
 
-# Connection = namedtuple('Connection', 'session, url_base')
-
 class Connection(NamedTuple):
+    """Holds a requests session and the base url for our API"""
     session: requests.sessions.Session
     url_base: str
 
@@ -44,11 +42,11 @@ class Pages():
 
             try:
                 json_resource = self.json['values'][self.index]
-            except (IndexError, TypeError):
+            except (IndexError, TypeError) as error:
                 if self.url_next:
                     self.get_page()
                 else:
-                    raise StopIteration
+                    raise StopIteration from error
             else:
                 api_resource = self.api_class(
                     connection=self.connection,
@@ -57,6 +55,7 @@ class Pages():
                 return api_resource
 
     def get_page(self):
+        """collect the next page of data from a paged resource"""
         self.logger.debug("url_next=%s with parameters=%s", self.url_next, self.parameters)
 
         response = self.connection.session.get(self.url_next, params=self.parameters)

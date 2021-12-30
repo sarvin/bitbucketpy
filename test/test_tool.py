@@ -1,3 +1,4 @@
+"""Test suite for the bitbucket.tool module"""
 import random
 import string
 import unittest
@@ -7,6 +8,8 @@ import src.bitbucket
 
 
 class Page(unittest.TestCase):
+    """Test cases for the bitbucket.tool.Pages class"""
+
     def test_get_page(self):
         """When multiple pages exist query all pages till "next" is None"""
         # Arrange
@@ -21,7 +24,9 @@ class Page(unittest.TestCase):
             'page': 1,
             'pagelen': 10,
             'size': 29,
-            'values': [{'name': f'{x}{"".join(random.choices(string.ascii_lowercase + string.digits, k=4))}'} for x in range(1,11)]}
+            'values': [
+                {'name': f'{x}{"".join(random.choices(string.ascii_lowercase + string.digits, k=4))}'} # pylint: disable=line-too-long
+                for x in range(1,11)]}
 
         response_2 = Mock(status_code=200)
         response_2.json.return_value = {
@@ -30,8 +35,9 @@ class Page(unittest.TestCase):
             'pagelen': 10,
             'previous': f'{connection.url_base}/refs/branches?page=1',
             'size': 29,
-            'values': [{'name': f'{x}{"".join(random.choices(string.ascii_lowercase + string.digits, k=4))}'} for x in range(11,21)]}
-
+            'values': [
+                {'name': f'{x}{"".join(random.choices(string.ascii_lowercase + string.digits, k=4))}'} # pylint: disable=line-too-long
+                for x in range(1,11)]}
 
         response_3 = Mock(status_code=200)
         response_3.json.return_value = {
@@ -39,7 +45,9 @@ class Page(unittest.TestCase):
             'pagelen': 10,
             'previous': f'{connection.url_base}/refs/branches?page=2',
             'size': 29,
-            'values': [{'name': f'{x}{"".join(random.choices(string.ascii_lowercase + string.digits, k=4))}'} for x in range(21,30)]}
+            'values': [
+                {'name': f'{x}{"".join(random.choices(string.ascii_lowercase + string.digits, k=4))}'} # pylint: disable=line-too-long
+                for x in range(1,11)]}
 
 
         session.get.side_effect = [
@@ -61,7 +69,9 @@ class Page(unittest.TestCase):
         self.assertEqual(len(resources), 29)
 
     def test_get_page_single_resource(self):
-        """When a single resource exists for query (size of 1) then only one resource should be returned"""
+        """When a single resource exists for query (size of 1)
+        then only one resource should be returned
+        """
         # Arrange
         commit_string = "".join(
             random.choices(string.ascii_lowercase + string.digits, k=39))
@@ -106,7 +116,9 @@ class Page(unittest.TestCase):
         self.assertEqual(len(resources), 1)
 
     def test_get_page_missing_next_in_response(self):
-        """When the "next" parameter is missing from the return value make next queries based on total count"""
+        """When the "next" parameter is missing from the
+        return value make next queries based on total count
+        """
         # Arrange
         session = Mock()
         connection = src.bitbucket.tool.Connection(

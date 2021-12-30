@@ -1,5 +1,4 @@
 """Classes representing Bitbucket resources"""
-import copy
 import time
 from enum import Enum
 from types import SimpleNamespace
@@ -11,7 +10,8 @@ from . import exceptions
 from . import tool
 
 
-class MixinBranchesFromLink():
+class MixinBranchesFromLink(): # pylint: disable=too-few-public-methods
+    """Mixin class used to add the ability to find multiple branches associated with the resource"""
     def branches(self, parameters: dict=None) -> tool.Pages:
         """Method for retrieving Branches from repository
 
@@ -27,7 +27,7 @@ class MixinBranchesFromLink():
         return pages
 
 
-class MixinCommitsFromLink():
+class MixinCommitsFromLink(): # pylint: disable=too-few-public-methods
     """Mixin class used to add querying for commits associated with object"""
 
     def commits(self, parameters: dict=None) -> tool.Pages:
@@ -45,7 +45,7 @@ class MixinCommitsFromLink():
         return pages
 
 
-class MixinSourceFromLink():
+class MixinSourceFromLink(): # pylint: disable=too-few-public-methods
     """Mixin class used to add querying for source associated with object"""
 
     def source(self, parameters: dict=None) -> tool.Pages:
@@ -63,7 +63,7 @@ class MixinSourceFromLink():
         return pages
 
 
-class MixinStatusFromLink():
+class MixinStatusFromLink(): # pylint: disable=too-few-public-methods
     """Mixin class used to query commit statuses for a commit.
         Returns all statuses (e.g. build results) for a specific commit.
     """
@@ -83,7 +83,8 @@ class MixinStatusFromLink():
         return pages
 
 
-class MixinPullrequestFromLink():
+class MixinPullrequestFromLink(): # pylint: disable=too-few-public-methods
+    """Mixin to add the ability to query pullrequests associated with a resource"""
     def pullrequests(self, parameters: dict=None) -> tool.Pages:
         """Method for retrieving pullrequests from repository
 
@@ -99,7 +100,8 @@ class MixinPullrequestFromLink():
         return pages
 
 
-class MixinTagsFromLink():
+class MixinTagsFromLink(): # pylint: disable=too-few-public-methods
+    """Mixin to add querying tags associated with a resource"""
     def tags_from_link(self, parameters: dict=None) -> tool.Pages:
         """Method for retrieving tags from repository
 
@@ -115,7 +117,7 @@ class MixinTagsFromLink():
         return pages
 
 
-class MixinDelete():
+class MixinDelete(): # pylint: disable=too-few-public-methods
     """Mixin class used to add delete functionality"""
     def delete(self) -> requests.models.Response:
         """Method for deleting the resource represented by this object.
@@ -130,12 +132,15 @@ class MixinDelete():
         return response
 
 
-class MixinDiffCommit():
+class MixinDiffCommit(): # pylint: disable=too-few-public-methods
+    """Mixin class used to add diff functionality"""
     def diff(self, commit_hash: Union[str, "Branch", "Commit", "Repository", None] = None) -> str:
         """Produces a raw git-style diff.
 
-        If commit_hash is not included then the diff is produced against the first parent of the specified commit.
-        If commit_hash is included then this produces a raw, git-style diff for a revspec of a commit, a branch's latest commit or a repository's latest commit.
+        If commit_hash is not included then the diff is produced against
+            the first parent of the specified commit.
+        If commit_hash is included then this produces a raw, git-style diff
+            for a revspec of a commit, a branch's latest commit or a repository's latest commit.
 
         Args:
             commit_hash (Union[str, Branch, Commit, Repository, None): a commit hash as string,
@@ -180,11 +185,15 @@ class MixinDiffCommit():
 
         return response.text
 
-    def diffstat(self, commit_hash: Union[str, "Branch", "Commit", "Repository", None] = None) -> str:
-        """Produces a record for every path modified, including information on the type of the change and the number of lines added and removed.
+    def diffstat(
+            self, commit_hash: Union[str, "Branch", "Commit", "Repository", None] = None) -> str:
+        """Produces a record for every path modified, including
+        information on the type of the change and the number of lines added and removed.
 
-        If commit_hash is not included then the diff is produced against the first parent of the specified commit.
-        If commit_hash is included then this produces a raw, git-style diff for a revspec of a commit, a branch's latest commit or a repository's latest commit.
+        If commit_hash is not included then the diff is produced
+            against the first parent of the specified commit.
+        If commit_hash is included then this produces a raw, git-style diff for a revspec of a
+            commit, a branch's latest commit or a repository's latest commit.
 
         Args:
             commit_hash (Union[str, Branch, Commit, Repository, None): a commit hash as string,
@@ -237,15 +246,17 @@ class MixinDiffCommit():
 
 
 class Base(SimpleNamespace):
+    """Base class for Bitbucket resources"""
     def __init__(self, connection: tool.Connection, **kwargs) -> None:
         super().__init__(**kwargs)
 
         self.connection = connection
 
     def __repr__(self):
-        return '<%s %s>' % (self.__class__.__name__, self.name)
+        return f'<{self.__class__.__name__} {self.name}>'
 
     def refresh(self):
+        """Update a resource to capture changes that occurred after resource generation"""
         url = self.links['self']['href']
 
         response = self.connection.session.get(url)
@@ -286,21 +297,21 @@ class Commit(MixinDiffCommit, MixinStatusFromLink, Base):
     """Class representing a commit in Bitbucket"""
 
     def __repr__(self):
-        return '%s(hash=%s)' % (self.__class__.__name__, self.hash)
+        return f'{self.__class__.__name__}(hash={self.hash})'
 
 
 class Diffstat(Base):
     """Helper class for diffstat"""
 
     def __repr__(self):
-        return '%s %s:%s' % (self.__class__.__name__, self.old['path'], self.new['path'])
+        return f"{self.__class__.__name__} {self.old['path']}:{self.new['path']}"
 
 
 class CommitFile(Base):
     """Helper class for commit_file"""
 
     def __repr__(self):
-        return '%s %s' % (self.__class__.__name__, self.path)
+        return f'{self.__class__.__name__} {self.path}'
 
     def commit_object(self) -> Commit:
         """Commit object representing the merging of two histories done
@@ -323,20 +334,21 @@ class Pipeline(Base):
     """Helper class for Pipelines"""
 
     def __repr__(self):
-        return '<%s %s %s %s>' % (
-            self.__class__.__name__,
-            self.repository['name'],
-            self.build_number,
-            self.target['ref_name'])
+        representation = (
+            f"<{self.__class__.__name__} {self.repository['name']}"
+            f"{self.build_number} {self.target['ref_name']}>")
+        return representation
 
 
 class Pullrequest(MixinCommitsFromLink, Base):
     """Helper class for Pullrequests"""
 
     def __repr__(self):
-        return '<%s %s>' % (self.__class__.__name__, self.id)
+        return f'<{self.__class__.__name__} {self.id}>'
 
-    def merge(self, merge_strategy: "PullrequestMergeStrategy", message: str) -> Union["Pullrequest", "PullrequestWaiter"]:
+    def merge(
+            self, merge_strategy: "PullrequestMergeStrategy",
+            message: str) -> Union["Pullrequest", "PullrequestWaiter"]:
         """Merge an open pullrequest
 
         Returns:
@@ -385,11 +397,13 @@ class Pullrequest(MixinCommitsFromLink, Base):
 
 
 class PullrequestWaiter():
+    """Class instantiated when a pullrequest is merged asynchronously"""
     def __init__(self, connection: tool.Connection, location: str):
         self.connection = connection
         self.location = location
 
     def ready(self):
+        """Determine if a pullrequest's merge request has completed"""
         status = False
 
         poll_merge = self.connection.session.get(
@@ -405,13 +419,20 @@ class PullrequestWaiter():
         return status
 
     def response(self):
+        """Get the status of a pullrequest"""
         poll_merge = self.connection.session.get(
             self.location)
 
         return poll_merge
 
     def wait(self, delay: int = 5, max_attempts: int = 40):
-        for x in range(0, max_attempts):
+        """Wait for a asynchronous pullrequest to complete
+
+        Args:
+            delay (int, optional): How long to wait between polling. Defaults to 5.
+            max_attempts (int, optional): How many poll attempts to make. Defaults to 40.
+        """
+        for attempt in range(0, max_attempts): #pylint: disable=unused-variable
             time.sleep(delay)
 
             poll_merge = self.connection.session.get(self.location)
@@ -427,7 +448,8 @@ class PullrequestWaiter():
 
 
 class Repository(
-        MixinBranchesFromLink, MixinCommitsFromLink, MixinDiffCommit, MixinPullrequestFromLink, MixinSourceFromLink, MixinTagsFromLink, Base):
+        MixinBranchesFromLink, MixinCommitsFromLink, MixinDiffCommit,
+        MixinPullrequestFromLink, MixinSourceFromLink, MixinTagsFromLink, Base):
     """Helper class for Repositories"""
 
     def pullrequest(self, pullrequest_id: int) -> "Pullrequest":
@@ -447,8 +469,8 @@ class Repository(
 
         try:
             response.raise_for_status()
-        except requests.exceptions.HTTPError as e:
-            raise exceptions.ObjectDoesNotExist(*e.args, **e.__dict__) from e
+        except requests.exceptions.HTTPError as error:
+            raise exceptions.ObjectDoesNotExist(*error.args, **error.__dict__) from error
 
         pullrequest = Pullrequest(
             connection=self.connection,
@@ -474,8 +496,8 @@ class Repository(
 
         try:
             response.raise_for_status()
-        except requests.exceptions.HTTPError as e:
-            raise exceptions.ObjectDoesNotExist(*e.args, **e.__dict__) from e
+        except requests.exceptions.HTTPError as error:
+            raise exceptions.ObjectDoesNotExist(*error.args, **error.__dict__) from error
 
         branch = Branch(
             connection=self.connection,
@@ -507,6 +529,14 @@ class Repository(
         return pullrequest
 
     def create_tag(self, tag_name: str, commit_hash: Union[str, "Commit"]) -> "Tag":
+        """Method for creating a tag in a Bitbucket repository
+
+        Raises:
+            exceptions.ObjectExists: exception thrown when the tag already exists.
+
+        Returns:
+            Tag: object representing a Tag in Bitbucket
+        """
         url = self.links['tags']['href']
 
         data = {'name': tag_name}
@@ -520,10 +550,10 @@ class Repository(
 
         try:
             response.raise_for_status()
-        except requests.exceptions.HTTPError as e:
+        except requests.exceptions.HTTPError as error:
             if 'application/json' in response.headers['Content-Type']:
-                if 'already exists' in response.json().get('error', {}).get('message'):
-                    raise exceptions.ObjectExists(*e.args, **e.__dict__) from e
+                if 'already exists' in response.json().get('error', {}).get('message'): # pylint: disable=no-else-raise
+                    raise exceptions.ObjectExists(*error.args, **error.__dict__) from error
                 else:
                     raise
             else:
@@ -558,10 +588,10 @@ class Repository(
 
         try:
             response.raise_for_status()
-        except requests.exceptions.HTTPError as e:
+        except requests.exceptions.HTTPError as error:
             if 'application/json' in response.headers['Content-Type']:
-                if 'already exists' in response.json().get('error', {}).get('message'):
-                    raise exceptions.ObjectExists(*e.args, **e.__dict__) from e
+                if 'already exists' in response.json().get('error', {}).get('message'): # pylint: disable=no-else-raise
+                    raise exceptions.ObjectExists(*error.args, **error.__dict__) from error
                 else:
                     raise
             else:
@@ -591,8 +621,8 @@ class Repository(
 
         try:
             response.raise_for_status()
-        except requests.exceptions.HTTPError as e:
-            raise exceptions.ObjectDoesNotExist(*e.args, **e.__dict__) from e
+        except requests.exceptions.HTTPError as error:
+            raise exceptions.ObjectDoesNotExist(*error.args, **error.__dict__) from error
 
         tag = Tag(
             connection=self.connection,
@@ -601,13 +631,17 @@ class Repository(
         return tag
 
 
-class PullrequestData():
-    def __init__(self, title: str, source_branch: str, destination_branch: str, close_source_branch: bool = False):
+class PullrequestData(): # pylint: disable=too-few-public-methods
+    """Class used to represent and generate the data required to make a pullrequest"""
+    def __init__(
+            self, title: str, source_branch: str,
+            destination_branch: str, close_source_branch: bool = False):
         """Set data for creating a pullrequest in Bitbucket
 
         Args:
             title (str): The title of the pullrequest
-            source_branch (str): The branch that has commits we want merged to the destination branch.
+            source_branch (str): The branch that has commits
+                we want merged to the destination branch.
             destination_branch (str): The branch that has its history updated with commits.
             close_source_branch (bool): Pre-set the pullrequest to close the source branch if True.
                 Leave the source branch open if False.
@@ -617,7 +651,12 @@ class PullrequestData():
         self.destination_branch = destination_branch
         self.close_source_branch = close_source_branch
 
-    def generate_pullrequest_dictionary(self):
+    def generate_pullrequest_dictionary(self) -> dict:
+        """Create the dictionary of data required to make a pullrequest
+
+        Returns:
+            dict: dictionary of data to make a pullrequest
+        """
         data = {}
         if self.title:
             data['title'] = self.title
@@ -667,8 +706,10 @@ class PullrequestMergeStrategy(Enum):
 
     Commits in a source branch can be added to a destination branch in
     different ways; merged, squashed or fast forwarded.
-    The left side of the statement is Bitbucketpy's name for how commits are added to the destination.
-    The right side of the statement is Bitbucket's name for how commits are added to the destination.
+    The left side of the statement is Bitbucketpy's name
+        for how commits are added to the destination.
+    The right side of the statement is Bitbucket's name
+        for how commits are added to the destination.
 
     Example:
         import bitbucket
