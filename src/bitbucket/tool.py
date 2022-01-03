@@ -32,6 +32,7 @@ class Pages():
         self.parameters = parameters
         self.index = -1
         self.json = None
+        self.visited = 0 # keep track of how many resources we've returned
 
     def __iter__(self):
         return self
@@ -62,13 +63,14 @@ class Pages():
         response.raise_for_status()
 
         self.json = response.json()
+        self.visited = self.visited + self.json['pagelen']
 
         if self.json.get('next'):
             ### Let Bitbucket decide our URL parameters
             ### after the initial request
             self.parameters = None
             self.url_next = self.json.get('next')
-        elif self.json.get('page', 0) * self.json.get('pagelen') < self.json.get('size', 0):
+        elif self.visited < self.json.get('size', 0):
             ### pipelines end-point never returns a "next"
             # if self.parameters and self.parameters.get('page'):
             self.parameters['page'] = self.json.get('page', 1) + 1

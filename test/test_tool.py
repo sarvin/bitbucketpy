@@ -42,7 +42,7 @@ class Page(unittest.TestCase):
         response_3 = Mock(status_code=200)
         response_3.json.return_value = {
             'page': 3,
-            'pagelen': 10,
+            'pagelen': 9,
             'previous': f'{connection.url_base}/refs/branches?page=2',
             'size': 29,
             'values': [
