@@ -102,7 +102,7 @@ class API():
             self.bitbucket_url,
             'repositories',
             self.bitbucket_workspace,
-            repository_name,
+            repository_name.lower(),
             'pipelines/'])
 
         pages = tool.Pages(
