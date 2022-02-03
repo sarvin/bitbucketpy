@@ -1,14 +1,14 @@
 """Access to Octopus APi see """
-from enum import Enum
 import logging
-import os
+from enum import Enum
+from logging import NullHandler
 from typing import Any, Dict
+
 import requests
 
-from . import exceptions
-from . import tool
-from . import resource
+from . import exceptions, resource, tool
 
+logging.getLogger(__name__).addHandler(NullHandler())
 
 class API():
     """Class for interacting with the Bitbucket resources"""
